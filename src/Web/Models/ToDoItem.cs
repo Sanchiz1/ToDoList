@@ -8,7 +8,7 @@ namespace Web.Models
         public string UserId {  get; set; } = null!;
 
         [Required]
-        [StringLength(200)]
+        [MaxLength(200)]
         public string Title { get; set; } = null!;
 
         [DataType(DataType.Date)]

@@ -8,7 +8,7 @@ namespace Web.Data
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
-        DbSet<ToDoItem> ToDoItems => Set<ToDoItem>();
+        public DbSet<ToDoItem> ToDoItems => Set<ToDoItem>();
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
