@@ -4,50 +4,76 @@
     ViewData["Title"] = "Index";
 }
 
-<h1>Index</h1>
+<h1>Tasks</h1>
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
+<div class="d-flex justify-content-between">
+    <form>
+        <button asp-action="Create" class="btn btn-primary">Add</button>
+    </form>
+    <form asp-controller="ToDoItems" asp-action="Index" method="get">
+        @{
+            var value = "false";
+            var className = "";
+            if (Context.Request.Query["ASC"] == "true")
+            {
+                className = "bi bi-sort-up";
+            }
+            else
+            {
+                className = "bi bi-sort-down-alt";
+                value = "true";
+            }
+            <button type="submit" class="btn btn-light" value=@value name="ASC"><i class="@className"></i></button>
+        }
+    </form>
+
+    <form asp-controller="ToDoItems" asp-action="Index" method="get">
+        <div class="input-group">
+            <input class="form-control" type="text" placeholder="Search..." name="SearchString" />
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+        </div>
+    </form>
+</div>
 <table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.UserId)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Title)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Deadline)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.IsFinished)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.UserId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Title)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Deadline)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.IsFinished)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    <form method="post" asp-action="Check" asp-route-id="@item.Id">
+                        @if (item.IsFinished)
+                        {
+                            <button type="submit" class="btn btn-light"><i class="bi bi-check-square"></i></button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="btn btn-light"><i class="bi bi-square"></i></button>
+                        }
+                    </form>
+                </td>
+                <td>
+                    <p class="m-0">
+                        @if (item.IsFinished)
+                        {
+                            <s>@Html.DisplayFor(modelItem => item.Title)</s>
+                        }
+                        else
+                        {
+                            @Html.DisplayFor(modelItem => item.Title)
+                        }
+                    </p>
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Deadline)
+                </td>
+                <td class="d-flex">
+                    <form class="ms-auto">
+                        <button asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary">Edit</button>
+                        <button asp-action="Details" asp-route-id="@item.Id" class="btn btn-primary">Details</button>
+                        <button asp-action="Delete" asp-route-id="@item.Id" class="btn btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        }
     </tbody>
 </table>

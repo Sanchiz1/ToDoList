@@ -1,31 +1,54 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using Web.Data;
+using Web.Extensions;
 using Web.Models;
 
 namespace Web.Controllers
 {
+    [Authorize]
     public class ToDoItemsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public ToDoItemsController(ApplicationDbContext context)
+        public ToDoItemsController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
-        // GET: ToDoItems
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string searchString, bool ASC = true)
         {
-            return View(await _context.ToDoItems.ToListAsync());
+            IQueryable<ToDoItem> toDoItems = _context.ToDoItems
+                .Where(t =>
+                    t.UserId == HttpContextExtensions.GetUserId(HttpContext));
+
+            if (!String.IsNullOrEmpty(searchString))
+            {
+                toDoItems = toDoItems.Where(t => t.Title.Contains(searchString));   
+            }
+
+            if (ASC)
+            {
+                toDoItems = toDoItems.OrderBy(t => t.Deadline);
+            }
+            else
+            {
+                toDoItems = toDoItems.OrderByDescending(t => t.Deadline);
+            }
+
+            return View(await toDoItems.ToListAsync());
         }
 
-        // GET: ToDoItems/Details/5
         public async Task<IActionResult> Details(Guid? id)
         {
             if (id == null)
@@ -43,30 +66,28 @@ namespace Web.Controllers
             return View(toDoItem);
         }
 
-        // GET: ToDoItems/Create
         public IActionResult Create()
         {
+            throw new Exception("Some exception");
             return View();
         }
 
-        // POST: ToDoItems/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,UserId,Title,Deadline,IsFinished")] ToDoItem toDoItem)
+        public async Task<IActionResult> Create([Bind("Id,Title,Deadline,IsFinished")] ToDoItem toDoItem)
         {
             if (ModelState.IsValid)
             {
                 toDoItem.Id = Guid.NewGuid();
-                _context.Add(toDoItem);
+                toDoItem.UserId = HttpContextExtensions.GetUserId(HttpContext);
+                toDoItem.Id = Guid.NewGuid();
+                _context.ToDoItems.Add(toDoItem);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             return View(toDoItem);
         }
 
-        // GET: ToDoItems/Edit/5
         public async Task<IActionResult> Edit(Guid? id)
         {
             if (id == null)
@@ -82,9 +103,6 @@ namespace Web.Controllers
             return View(toDoItem);
         }
 
-        // POST: ToDoItems/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Guid id, [Bind("Id,UserId,Title,Deadline,IsFinished")] ToDoItem toDoItem)
@@ -117,7 +135,6 @@ namespace Web.Controllers
             return View(toDoItem);
         }
 
-        // GET: ToDoItems/Delete/5
         public async Task<IActionResult> Delete(Guid? id)
         {
             if (id == null)
@@ -135,7 +152,30 @@ namespace Web.Controllers
             return View(toDoItem);
         }
 
-        // POST: ToDoItems/Delete/5
+        [HttpPost, ActionName("Check")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Check(Guid? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var toDoItem = await _context.ToDoItems
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (toDoItem == null)
+            {
+                return NotFound();
+            }
+
+            toDoItem.IsFinished = !toDoItem.IsFinished;
+            _context.ToDoItems.Attach(toDoItem);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
+
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(Guid id)

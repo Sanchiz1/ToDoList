@@ -19,7 +19,8 @@ namespace Web.Data
             modelBuilder.Entity<ToDoItem>()
                 .HasOne<ApplicationUser>()
                 .WithMany()
-                .HasForeignKey(s => s.UserId);
+                .HasForeignKey(s => s.UserId)
+                .IsRequired();
         }
     }
 }
