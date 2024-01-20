@@ -1,22 +1,40 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
+using Web.Data;
+using Web.Extensions;
 using Web.Models;
 
 namespace Web.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
-            _logger = logger;
+            _context = context;
+            _userManager = userManager;
         }
 
         public IActionResult Index()
         {
             return View();
+        }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<JsonResult> GetUpcomingTasks()
+        {
+            IQueryable<ToDoItem> toDoItems = _context.ToDoItems
+                .Where(t =>
+                    t.UserId == HttpContextExtensions.GetUserId(HttpContext))
+                .Take(5);
+
+            return new JsonResult(await toDoItems.ToListAsync());
         }
 
         [Authorize]

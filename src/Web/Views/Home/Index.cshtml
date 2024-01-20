@@ -6,3 +6,20 @@
     <h1 class="display-4">Welcome</h1>
     <p>Manage your tasks with ToDoList</p>
 </div>
+
+@section Scripts{
+    <script>
+        $.ajax({
+            type: "GET",
+            url: "@Url.Action("GetUpcomingTasks")",
+            dataType: "json",
+            success: function(result){
+                if (result.length > 0) {
+                    let tasks = ''
+                    result.forEach(t => tasks += t.title + "\n")
+                    alert("You have upcoming ToDos:\n" + tasks);
+                }
+            }
+        })
+    </script>
+}

@@ -68,7 +68,6 @@ namespace Web.Controllers
 
         public IActionResult Create()
         {
-            throw new Exception("Some exception");
             return View();
         }
 
